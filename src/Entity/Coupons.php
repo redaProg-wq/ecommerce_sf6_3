@@ -3,6 +3,8 @@
 namespace App\Entity;
 
 use App\Repository\CouponsRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
@@ -38,6 +40,14 @@ class Coupons
     #[ORM\ManyToOne(inversedBy: 'coupons')]
     #[ORM\JoinColumn(nullable: false)]
     private ?CouponType $coupon_type = null;
+
+    #[ORM\OneToMany(mappedBy: 'coupons', targetEntity: Order::class)]
+    private Collection $user;
+
+    public function __construct()
+    {
+        $this->user = new ArrayCollection();
+    }
 
     public function getId(): ?int
     {
@@ -136,6 +146,36 @@ class Coupons
     public function setCouponType(?CouponType $coupon_type): static
     {
         $this->coupon_type = $coupon_type;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Order>
+     */
+    public function getUser(): Collection
+    {
+        return $this->user;
+    }
+
+    public function addUser(Order $user): static
+    {
+        if (!$this->user->contains($user)) {
+            $this->user->add($user);
+            $user->setCoupons($this);
+        }
+
+        return $this;
+    }
+
+    public function removeUser(Order $user): static
+    {
+        if ($this->user->removeElement($user)) {
+            // set the owning side to null (unless already changed)
+            if ($user->getCoupons() === $this) {
+                $user->setCoupons(null);
+            }
+        }
 
         return $this;
     }
